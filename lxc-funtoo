@@ -19,7 +19,7 @@
 #       - veth is a virtual ethernet interface, assigned to the guest
 #       - bridge is like a software-switch interface on the host
 #       - requires some host configuration, eg:
-#          # install bridge utils package, eg: on gentoo 'emerge bridge-utils'
+#          # install bridge utils package, eg: on funtoo 'emerge bridge-utils'
 #          brctl addbr br0           # create bridge
 #          brctl setfd br0 0         # set forward delay to 0 seconds
 #          ifconfig br0 172.20.0.1   # set an IP for the bridge
@@ -123,7 +123,7 @@ cat <<EOF > ${ROOTFS}/etc/conf.d/net
 #        brctl addbr br0
 #        brctl setfd br0 0
 #        ifconfig br0 172.20.0.1
-#       ... or, on a gentoo host run:
+#       ... or, on a funtoo host run:
 #        # create init script
 #        cd /etc/init.d && ln -s net.lo net.br0
 #        # specify configuration
@@ -139,7 +139,7 @@ cat <<EOF > ${ROOTFS}/etc/conf.d/net
 #        IP=\`ifconfig \$EXTIF|grep 'inet addr'|cut -d':' -f2|cut -d' ' -f1\`
 #        iptables -t nat -A POSTROUTING -o \$EXTIF \\ 
 #         -j SNAT --to-source \$IP
-#       ... on a gentoo host, assuming external interface IP remains static
+#       ... on a funtoo host, assuming external interface IP remains static
 #           between reboots, then after running the above execute:
 #             /etc/init.d/iptables save
 #             rc-update add iptables default
@@ -505,7 +505,7 @@ You can averride default by environnement variables or commandline options with 
  default, env, cmdline option
  
  Example : 
- $ GATEWAY=10.0.0.254 ./lxc-gentoo create -i 10.0.0.1/24 -n gentooserver -u gentooserver
+ $ GATEWAY=10.0.0.254 ./lxc-funtoo create -i 10.0.0.1/24 -n funtooserver -u funtooserver
 
  An interactive script will ask you for various information.
 
