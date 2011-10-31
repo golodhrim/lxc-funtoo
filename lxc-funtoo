@@ -2,7 +2,7 @@
 
 ###############################################################################
 #
-#  lxc-gentoo : script to create a gentoo lxc guest
+#  lxc-funtoo : script to create a funtoo lxc guest
 #  
 #   license: 
 #    - GPLv3 (you know the deal...)
@@ -14,7 +14,7 @@
 #    - bridge-utils
 #
 #   output environment description:
-#    - uses the latest stage3 and portage (ie: 'very latest gentoo')
+#    - uses the latest stage3 and portage
 #    - creates a veth/bridge-connected guest
 #       - veth is a virtual ethernet interface, assigned to the guest
 #       - bridge is like a software-switch interface on the host
@@ -41,32 +41,26 @@
 #    - support for alternate network configurations
 #    - support for reading from -f file for config on create
 #
-#   authors:
-#    - Anders Larsson / https://github.com/inbox/new/Wicla
-#    - Julien Sanchez / julien.sanchez at gmail.com
-#    - Walter Stanish / walter _the-a-like-symbol-thinggy_ stani ^_^ sh
-#    - Guillaume Zitta / lxc at zitta point fr
-#
 ###############################################################################
 
-DISTRO="gentoo"
+DISTRO="funtoo"
 CACHE="/var/cache/lxc/${DISTRO}"
 
 # Static defines
 WGET="wget --timeout=8 --read-timeout=15 -c -t10 -nd"
 
 # Defaults only
-NAME=${NAME:-gentoo}
-UTSNAME=${UTSNAME:-gentoo}
+NAME=${NAME:-funtoo}
+UTSNAME=${UTSNAME:-funtoo}
 IPV4=${IPV4:-172.20.0.88/24}
 GATEWAY=${GATEWAY:-172.20.0.1}
 GUESTROOTPASS=${GUESTROOTPASS:-toor}
 if [ `uname -m` == "x86_64" ]; then
- ARCH=${ARCH:-amd64}
- SUBARCH=${SUBARCH:-i686}
+ ARCH=${ARCH:-x86_64bit}
+ SUBARCH=${SUBARCH:-generic_64}
 else
- ARCH=${ARCH:-x86}
- SUBARCH=${SUBARCH:-$(uname -m)}
+ ARCH=${ARCH:-x86_32bit}
+ SUBARCH=${SUBARCH:-i686}
 fi
 CONFFILE="${UTSNAME}.conf"
 
@@ -119,7 +113,7 @@ write_distro_network() {
 # /etc/resolv.conf
 grep -i 'search ' /etc/resolv.conf > ${ROOTFS}/etc/resolv.conf
 grep -i 'nameserver ' /etc/resolv.conf >> ${ROOTFS}/etc/resolv.conf
-# gentoo network configuration
+# funtoo network configuration
 cat <<EOF > ${ROOTFS}/etc/conf.d/net
 
 # eth0
@@ -294,16 +288,16 @@ create() {
     fi
 
     # choose the architecture
-    echo -n "Which gentoo architecture should we use in this container ? [${ARCH}] "
+    echo -n "Which funtoo architecture should we use in this container ? [${ARCH}] "
     read _ARCH_
     if [ ! -z "${_ARCH_}" ]; then
     	ARCH=${_ARCH_}
     fi
 
-    LXC_ARCH="x86_64"
+    LXC_ARCH="x86_64bit"
     # if x86 is given prompt for "subarch"
-    if [ "${ARCH}" == 'x86' ]; then
-      echo -n "Sub architecture of x86 ? [${SUBARCH}] "
+    if [ "${ARCH}" == 'x86_32bit' ]; then
+      echo -n "Sub architecture of x86_32bit ? [${SUBARCH}] "
     	read _SUBARCH_
       if [ ! -z "${_SUBARCH_}" ]; then
         SUBARCH=${_SUBARCH_}
@@ -329,7 +323,7 @@ create() {
   fi
 
     CONFFILE="${UTSNAME}.conf"
-    echo "Thanks!  Now sit back and relax while your gentoo brews...
+    echo "Thanks!  Now sit back and relax while your funtoo brews...
 
 "
     if which fortune 1>/dev/null 2>/dev/null ; then
@@ -365,20 +359,13 @@ create() {
     # make unique variables for x86 and amd64 since stage3 url are different
     echo -n "Generating strings to run... "
     if [ $ARCH == 'x86' ]; then
-      STAGE3SED="s/.*stage3-${SUBARCH}-\(........\)\.tar\.bz2.*/\1/p"
-      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${SUBARCH}"
-    else
-      STAGE3SED="s/.*stage3-${ARCH}-\(........\)\.tar\.bz2.*/\1/p"
-      STAGE3URL="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/stage3-${ARCH}"
+      STAGE3URL="http://ftp.osuosl.org/pub/funtoo/funtoo-current/${ARCH}/${SUBARCH}/stage3-current.tar.xz"
+  else
+      STAGE3URL="http://ftp.osuosl.org/pub/funtoo/funtoo-current/${ARCH}/${SUBARCH}/stage3-current.tar.xz"
     fi
 
-		echo -n "Determining latest ${DISTRO} ${ARCH} stage3 archive... "
-		mkdir -p ${CACHE} 1>/dev/null 2>/dev/null
-		LATEST_STAGE3_TIMESTAMP=`${WGET} -q -O - http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/current-stage3/ |sed -n "${STAGE3SED}" |sort -r |uniq |head -n 1`
-		echo ${LATEST_STAGE3_TIMESTAMP}
-
-		echo -n "Downloading (~120MB), please wait... "
-		${WGET} -O ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 "${STAGE3URL}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2" 1>/dev/null 2>/dev/null
+        echo -n "Downloading funtoo ${ARCH} (~120MB), please wait... "
+		${WGET} -O ${CACHE}/stage3-current.tar.xz "${STAGE3URL}" 1>/dev/null 2>/dev/null
 
 		RESULT=$?
 		if [ "${RESULT}" != "0" ]; then
@@ -392,16 +379,19 @@ create() {
 		mkdir -p "${TEMPLATE}" #1>/dev/null 2>/dev/null
 
 		echo -n "Extracting stage3 archive... "
-		tar -jxf ${CACHE}/stage3-${ARCH}-${LATEST_STAGE3_TIMESTAMP}.tar.bz2 -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
+		tar xpfJ ${CACHE}/stage3-current.tar.xz -C "${TEMPLATE}" 1>/dev/null 2>/dev/null
 		echo "done."
 		echo -n "Downloading ${DISTRO} portage (software database) snapshot... "
-		rm -f ${CACHE}/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
-		${WGET} -O ${CACHE}/portage-latest.tar.bz2 http://distfiles.gentoo.org/snapshots/portage-latest.tar.bz2 1>/dev/null 2>/dev/null
+		rm -f ${CACHE}/portage-current.tar.xz 1>/dev/null 2>/dev/null
+		${WGET} -O ${CACHE}/portage-current.tar.xz http://ftp.osuosl.org/pub/funtoo/funtoo-current/snapshots/portage-current.tar.xz 1>/dev/null 2>/dev/null
 		echo "done."
 		echo -n "Extracting... "
-		tar -jxf ${CACHE}/portage-latest.tar.bz2 -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
-		echo "done."
-	    else
+		tar -xpfJ ${CACHE}/portage-current.tar.xz -C "${TEMPLATE}/usr/" 1>/dev/null 2>/dev/null
+		echo "checking out the new portage..."
+        cd ${TEMPLATE}/usr/portage/
+        git checkout funtoo.org
+        echo "done."
+    else
 		echo "found."
 	    fi
 
@@ -409,7 +399,7 @@ create() {
 	    echo -n "Copying filesystem... "
 	    cp -a "${TEMPLATE}" ${ROOTFS} && echo "done." || exit
 	) 200> "/var/lock/subsys/lxc"
-    fi
+fi
 
 write_lxc_configuration
 
@@ -449,9 +439,7 @@ echo " # export PS1=\"(chroot) \$PS1\""
 echo " (chroot) #   <-- you are now in the guest"
 echo "... or, once the container is started with:"
 echo "    'lxc-start -f ${CONFFILE} -n ${NAME}'"
-echo "    ... just use lxc-console -n ${NAME} to get a shell."
-echo ""
-echo "Please post feedback/questions @ http://lxc-gentoo.sf.net/"
+echo "... just use lxc-console -n ${NAME} to get a shell."
 }
 
 destroy() {
