@@ -56,10 +56,10 @@ IPV4=${IPV4:-172.20.0.88/24}
 GATEWAY=${GATEWAY:-172.20.0.1}
 GUESTROOTPASS=${GUESTROOTPASS:-toor}
 if [ `uname -m` == "x86_64" ]; then
- ARCH=${ARCH:-x86_64bit}
+ ARCH=${ARCH:-x86-64bit}
  SUBARCH=${SUBARCH:-generic_64}
 else
- ARCH=${ARCH:-x86_32bit}
+ ARCH=${ARCH:-x86-32bit}
  SUBARCH=${SUBARCH:-i686}
 fi
 CONFFILE="${UTSNAME}.conf"
